@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # Function to check if a profile already exists
-profile_name=${1}
-profile_access_key=${2}
-profile_secret_key=${3}
-region=${4}
+profile_name="fastsync"
+profile_access_key=${1}
+profile_secret_key=${2}
+region=${3}
 
 which aws
 erroCode1=${?}
@@ -34,5 +34,32 @@ profile_exists() {
 }
 profile_exists
 
-echo  "creating s3 bucket "
-aws s3api create-bucket --bucket pfastsync --region ${region} --profile ${profile_name}
+
+#!/bin/bash
+
+# Variables
+LOCAL_DIRECTORY=${4}
+S3_BUCKET="s3://pfastsync"
+AWS_PROFILE="fastsync"  # Optional: If you use multiple AWS profiles
+
+# Check if the local directory exists
+if [ ! -d "$LOCAL_DIRECTORY" ]; then
+  echo "Local directory $LOCAL_DIRECTORY does not exist."
+  exit 1
+fi
+
+# Copy local directory to S3 bucket
+if [ -z "$AWS_PROFILE" ]; then
+  echo 'we cannot use default profile.'
+  exit 1
+else
+  aws s3 sync "$S3_BUCKET" "$LOCAL_DIRECTORY"  --profile "$AWS_PROFILE"
+fi
+
+# Check if the copy command was successful
+if [ $? -eq 0 ]; then
+  echo "Directory  $S3_BUCKET successfully copied to $LOCAL_DIRECTORY."
+else
+  echo "Failed to copy directory $S3_BUCKET to $LOCAL_DIRECTORY."
+fi
+

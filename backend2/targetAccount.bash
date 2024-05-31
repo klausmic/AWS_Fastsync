@@ -38,7 +38,7 @@ profile_exists
 #!/bin/bash
 
 # Variables
-LOCAL_DIRECTORY="/home/ec2-user"
+LOCAL_DIRECTORY=${4}
 S3_BUCKET="s3://pfastsync"
 AWS_PROFILE="fastsync"  # Optional: If you use multiple AWS profiles
 

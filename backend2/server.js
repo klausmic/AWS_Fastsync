@@ -6,9 +6,11 @@ const cors = require('cors');
 const { insertData, clientt } = require('./db');
 const fs = require('fs');
 const { exec } = require('child_process');
+const WebSocket = require('ws');
 
 const app = express();
 const port = 8000;
+const wss = new WebSocket.Server({ port: 8080 });
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -24,10 +26,30 @@ const upload = multer({ storage });
 app.use(bodyParser.json());
 app.use(cors());
 
+const clients = [];
+
+wss.on('connection', (ws) => {
+  clients.push(ws);
+  ws.on('close', () => {
+    const index = clients.indexOf(ws);
+    if (index > -1) {
+      clients.splice(index, 1);
+    }
+  });
+});
+
+const broadcast = (data) => {
+  clients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(JSON.stringify(data));
+    }
+  });
+};
+
 app.post('/api/migrationForm', upload.fields([{ name: 'sshKeyFile' }, { name: 'targetSshKeyFile' }]), async (req, res) => {
   const { 
-    projectName, awsSecretKey, awsAccessKey, region, sshUser, sshPassword, sshPort, sshIpAddress,
-    targetSshUser, targetAuthMethod, targetSshPassword, targetSshPort, targetIpAddress 
+    projectName, awsSecretKey, awsAccessKey, region, sshUser, sshPassword, sshPort, sshIpAddress, sourcDirectoryPath,
+    targetSshUser, targetAuthMethod, targetSshPassword, targetSshPort, targetIpAddress, targetDirectoryPath
   } = req.body;
   
   const sshKeyFilePath = req.files['sshKeyFile'] ? req.files['sshKeyFile'][0].path.replace(/\\/g, '/') : '';
@@ -43,12 +65,14 @@ app.post('/api/migrationForm', upload.fields([{ name: 'sshKeyFile' }, { name: 't
     sshPort: parseInt(sshPort),
     sshIpAddress,
     sshKeyFilePath,
+    sourcDirectoryPath,
     targetSshUser,
     targetAuthMethod,
     targetSshPassword,
     targetSshPort: parseInt(targetSshPort),
     targetIpAddress,
-    targetSshKeyFilePath
+    targetSshKeyFilePath,
+    targetDirectoryPath
   };
 
   try {
@@ -97,84 +121,72 @@ app.get('/api/sshData', (req, res) => {
   find_query(command3);
 });
 
-let validateData = {}
-
-app.post('/api/validatessh', (req, res) => {
-  validateData = req.body;
+app.post('/api/performActions', (req, res) => {
+  const validateData = req.body;
   console.log(validateData);
 
-  const sshCommand = `timeout 35s ssh -o StrictHostKeyChecking=no -i ${validateData.sshKeyFilePath} ${validateData.sshUser}@${validateData.sshIpAddress} 'bash -s' < sourceAccount.bash ${validateData.awsAccessKey} ${validateData.awsSecretKey} ${validateData.region};`;
+  const logFileName = `ssh_${validateData.projectName}_${Date.now()}.txt`;
+  const logFilePath = path.join('D:/Project/backend2/logfiles', logFileName);
+
+  const executeSSHCommand = (sshCommand, description) => {
+    return new Promise((resolve, reject) => {
+      const sshProcess = exec(sshCommand, (error, stdout, stderr) => {
+        if (error) {
+          console.error(`Error: ${error.message}`);
+          fs.appendFileSync(logFilePath, `${description} Error: ${error.message}\n`);
+          broadcast({ type: 'log', message: `${description} Error: ${error.message}` });
+          broadcast({ type: 'status', status: 'failure' });
+          return reject(error);
+        }
+        if (stderr) {
+          console.error(`SSH command stderr: ${stderr}`);
+          fs.appendFileSync(logFilePath, `${description} stderr: ${stderr}\n`);
+          broadcast({ type: 'log', message: `${description} stderr: ${stderr}` });
+          broadcast({ type: 'status', status: 'failure' });
+          return reject(new Error(stderr));
+        }
+        console.log(`SSH command output: ${stdout}`);
+        fs.appendFileSync(logFilePath, `${description} output: ${stdout}\n`);
+        broadcast({ type: 'log', message: `${description} output: ${stdout}` });
+        resolve(stdout);
+      });
+
+      sshProcess.stdout.on('data', (data) => {
+        console.log(`output:\n${data}`);
+        broadcast({ type: 'log', message: `output:\n${data}` });
+      });
+
+      sshProcess.stderr.on('data', (data) => {
+        console.error(`Error: ${data}`);
+        broadcast({ type: 'log', message: `Error: ${data}` });
+      });
+
+      sshProcess.on('close', (code) => {
+        console.log(`SSH command exited with code ${code}`);
+        const status = code === 0 ? 'success' : 'failure';
+        broadcast({ type: 'status', status });
+      });
+    });
+  };
+
+  const validateSSHCommand = `timeout 35s ssh -o StrictHostKeyChecking=no -i ${validateData.sshKeyFilePath} ${validateData.sshUser}@${validateData.sshIpAddress} 'bash -s' < sourceAccount.bash ${validateData.awsAccessKey} ${validateData.awsSecretKey} ${validateData.region} ${validateData.sourcDirectoryPath};`;
+  const syncToTargetCommand = `timeout 35s ssh -o StrictHostKeyChecking=no -i ${validateData.targetSshKeyFilePath} ${validateData.targetSshUser}@${validateData.targetIpAddress} 'bash -s' < targetAccount.bash ${validateData.awsAccessKey} ${validateData.awsSecretKey} ${validateData.region} ${validateData.targetDirectoryPath};`;
+
   fs.chmodSync(validateData.sshKeyFilePath, '400');
-
-  try {
-    const sshProcess = exec(sshCommand, (error, stdout, stderr) => {
-      if (error) {
-        console.error(`Error: ${error.message}`);
-        return;
-      }
-      if (stderr) {
-        console.error(`SSH command stderr: ${stderr}`);
-        return;
-      }
-      console.log(`SSH command output: ${stdout}`);
-    });
-
-    sshProcess.stdout.on('data', (data) => {
-      console.log(`output:\n${data}`);
-    });
-
-    sshProcess.stderr.on('data', (data) => {
-      console.error(`Error: ${data}`);
-    });
-
-    sshProcess.on('close', (code) => {
-      console.log(`SSH command exited with code ${code}`);
-    });
-  } catch (err) {
-    console.error('Some of the details are wrong:', err);
-    res.status(500).json({ success: false, message: 'Internal server error' });
-  }
-});
-
-app.post('/api/synctotarget', (req, res) => {
-  validateData = req.body;
-  console.log(validateData);
-
-  const sshCommand = `timeout 35s ssh -o StrictHostKeyChecking=no -i ${validateData.targetSshKeyFilePath} ${validateData.targetSshUser}@${validateData.targetIpAddress} 'bash -s' < targetAccount.bash ${validateData.awsAccessKey} ${validateData.awsSecretKey} ${validateData.region};`;
   fs.chmodSync(validateData.targetSshKeyFilePath, '400');
 
-  try {
-    const sshProcess = exec(sshCommand, (error, stdout, stderr) => {
-      if (error) {
-        console.error(`Error: ${error.message}`);
-        return;
-      }
-      if (stderr) {
-        console.error(`SSH command stderr: ${stderr}`);
-        return;
-      }
-      console.log(`SSH command output: ${stdout}`);
-    });
-
-    sshProcess.stdout.on('data', (data) => {
-      console.log(`output:\n${data}`);
-    });
-
-    sshProcess.stderr.on('data', (data) => {
-      console.error(`Error: ${data}`);
-    });
-
-    sshProcess.on('close', (code) => {
-      console.log(`SSH command exited with code ${code}`);
-    });
-  } catch (err) {
-    console.error('Some of the details are wrong:', err);
-    res.status(500).json({ success: false, message: 'Internal server error' });
-  }
+  (async () => {
+    try {
+      await executeSSHCommand(validateSSHCommand, 'Validate SSH');
+      await executeSSHCommand(syncToTargetCommand, 'Sync to Target');
+      res.json({ success: true, message: 'Operations completed successfully' });
+    } catch (error) {
+      console.error('Error during operations:', error);
+      res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+  })();
 });
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
-
-module.exports = { validateData };

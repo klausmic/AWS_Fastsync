@@ -6,6 +6,7 @@ profile_access_key=${1}
 profile_secret_key=${2}
 region=${3}
 
+
 which aws
 erroCode1=${?}
     if [[ ${erroCode1} != 0 ]]; then
@@ -40,7 +41,7 @@ aws s3api create-bucket --bucket pfastsync --region ${region} --profile ${profil
 # function to copy to s3
 
 # Variables
-LOCAL_DIRECTORY="/home/ec2-user"
+LOCAL_DIRECTORY=${4}
 S3_BUCKET="s3://pfastsync"
 AWS_PROFILE="fastsync"  # Optional: If you use multiple AWS profiles
 

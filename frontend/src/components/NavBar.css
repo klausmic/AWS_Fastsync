@@ -1,0 +1,19 @@
+.nav-toolbar {
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  .nav-logo {
+    display: flex;
+    align-items: center;
+  }
+  
+  .nav-logo-img {
+    height: 40px;
+    margin-right: 10px;
+  }
+  
+  .nav-buttons {
+    display: flex;
+  }
+  

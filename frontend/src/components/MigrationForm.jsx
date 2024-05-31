@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import './MigrationForm.css';
-import { Link } from 'react-router-dom';
+import { TextField, Button, Radio, RadioGroup, FormControlLabel, FormControl, FormLabel } from '@mui/material';
 
 const MigrationForm = () => {
   const [formData, setFormData] = useState({
@@ -15,6 +15,7 @@ const MigrationForm = () => {
     sshIpAddress: '',
     sshKeyFile: '',
     sshKeyFilePath: '',
+    sourcDirectoryPath: '',
     authMethod: 'password',
     targetSshUser: '',
     targetAuthMethod: 'password',
@@ -23,6 +24,7 @@ const MigrationForm = () => {
     targetSshKeyFilePath: '',
     targetSshPort: '',
     targetIpAddress: '',
+    targetDirectoryPath: '',
   });
 
   const handleChange = (e) => {
@@ -64,9 +66,7 @@ const MigrationForm = () => {
     Object.keys(formData).forEach((key) => {
       formDataToSend.append(key, formData[key]);
     });
-    
-    console.log(formData);
-    
+
     const instance = axios.create({
       baseURL: 'http://localhost:8000',
     });
@@ -84,113 +84,69 @@ const MigrationForm = () => {
 
   return (
     <div className="container">
-      <h2>AWS Migration Validation Form</h2>
+      <h2>AWS Target Account Form</h2>
       <form onSubmit={handleSubmit}>
-        <label>Project Name: </label>
-        <input type='text' name='projectName' value={formData.projectName} onChange={handleChange} />
-        <br />
-        <label>AWS Secret Key : </label>
-        <input type='text' name='awsSecretKey' value={formData.awsSecretKey} onChange={handleChange} />
-        <br />
-        <label>AWS Access Key : </label>
-        <input type='text' name='awsAccessKey' value={formData.awsAccessKey} onChange={handleChange} />
-        <br />
-        <label>Region : </label>
-        <input type='text' name='region' value={formData.region} onChange={handleChange} />
-        <br />
-        <label>SSH User:</label>
-        <input type="text" name="sshUser" value={formData.sshUser} onChange={handleChange} />
-        <br />
+        <TextField label="Project Name" name="projectName" value={formData.projectName} onChange={handleChange} fullWidth margin="normal" />
+        <TextField label="AWS Access Key" name="awsAccessKey" value={formData.awsAccessKey} onChange={handleChange} fullWidth margin="normal" />
+        <TextField label="AWS Secret Key" name="awsSecretKey" value={formData.awsSecretKey} onChange={handleChange} fullWidth margin="normal" />
+        <TextField label="Region" name="region" value={formData.region} onChange={handleChange} fullWidth margin="normal" />
 
-        <label>Authentication Method:</label>
-        <div>
-          <input
-            type="radio"
-            id="password"
-            name="authMethod"
-            value="password"
-            checked={formData.authMethod === 'password'}
-            onChange={handleChange}
-          />
-          <label htmlFor="password">Password</label>
-          <input
-            type="radio"
-            id="keyFile"
-            name="authMethod"
-            value="keyFile"
-            checked={formData.authMethod === 'keyFile'}
-            onChange={handleChange}
-          />
-          <label htmlFor="keyFile">Key File</label>
-        </div>
-        <br />
+        <h3>Source Instance Details</h3>
+        <TextField label="SSH User" name="sshUser" value={formData.sshUser} onChange={handleChange} fullWidth margin="normal" />
+
+        <FormControl component="fieldset" margin="normal">
+          <FormLabel component="legend">Authentication Method</FormLabel>
+          <RadioGroup row name="authMethod" value={formData.authMethod} onChange={handleChange}>
+            <FormControlLabel value="password" control={<Radio />} label="Password" />
+            <FormControlLabel value="keyFile" control={<Radio />} label="Key File" />
+          </RadioGroup>
+        </FormControl>
         {formData.authMethod === 'password' ? (
-          <>
-            <label>Password:</label>
-            <input type="password" name="sshPassword" value={formData.sshPassword} onChange={handleChange} />
-          </>
+          <TextField label="Password" type="password" name="sshPassword" value={formData.sshPassword} onChange={handleChange} fullWidth margin="normal" />
         ) : (
-          <>
-            <label>SSH Key File:</label>
-            <input type="file" name="sshKeyFile" onChange={handleFileChange} />
-          </>
+          <div>
+            <Button variant="contained" component="label" margin="normal">
+              Upload Key File
+              <input type="file" hidden name="sshKeyFile" onChange={handleFileChange} />
+            </Button>
+            <TextField label="Key File Path" name="sshKeyFilePath" value={formData.sshKeyFilePath} fullWidth margin="normal" disabled />
+          </div>
         )}
-        <br />
-        <label>SSH Port:</label>
-        <input type="number" name="sshPort" value={formData.sshPort} onChange={handleChange} />
-        <br />
-        <label>SSH IP Address:</label>
-        <input type="text" name="sshIpAddress" value={formData.sshIpAddress} onChange={handleChange} />
-        <br />
 
-        <h3>Target Account Details</h3>
-        <label>Target SSH User:</label>
-        <input type="text" name="targetSshUser" value={formData.targetSshUser} onChange={handleChange} />
-        <br />
-        <label>Target Authentication Method:</label>
-        <div>
-          <input
-            type="radio"
-            id="targetPassword"
-            name="targetAuthMethod"
-            value="password"
-            checked={formData.targetAuthMethod === 'password'}
-            onChange={handleChange}
-          />
-          <label htmlFor="targetPassword">Password</label>
-          <input
-            type="radio"
-            id="targetKeyFile"
-            name="targetAuthMethod"
-            value="keyFile"
-            checked={formData.targetAuthMethod === 'keyFile'}
-            onChange={handleChange}
-          />
-          <label htmlFor="targetKeyFile">Key File</label>
-        </div>
-        <br />
+        <TextField label="SSH Port" name="sshPort" value={formData.sshPort} onChange={handleChange} fullWidth margin="normal" />
+        <TextField label="SSH IP Address" name="sshIpAddress" value={formData.sshIpAddress} onChange={handleChange} fullWidth margin="normal" />
+        <TextField label="Source Directory path to Sync" name="sourcDirectoryPath" value={formData.sourcDirectoryPath} onChange={handleChange} fullWidth margin="normal" />
+        
+
+        <h3>Target Instance Details</h3>
+        <TextField label="Target SSH User" name="targetSshUser" value={formData.targetSshUser} onChange={handleChange} fullWidth margin="normal" />
+        <FormControl component="fieldset" margin="normal">
+          <FormLabel component="legend">Target Authentication Method</FormLabel>
+          <RadioGroup row name="targetAuthMethod" value={formData.targetAuthMethod} onChange={handleChange}>
+            <FormControlLabel value="password" control={<Radio />} label="Password" />
+            <FormControlLabel value="keyFile" control={<Radio />} label="Key File" />
+          </RadioGroup>
+        </FormControl>
         {formData.targetAuthMethod === 'password' ? (
-          <>
-            <label>Target Password:</label>
-            <input type="password" name="targetSshPassword" value={formData.targetSshPassword} onChange={handleChange} />
-          </>
+          <TextField label="Target SSH Password" type="password" name="targetSshPassword" value={formData.targetSshPassword} onChange={handleChange} fullWidth margin="normal" />
         ) : (
-          <>
-            <label>Target SSH Key File:</label>
-            <input type="file" name="targetSshKeyFile" onChange={handleFileChange} />
-          </>
+          <div>
+            <Button variant="contained" component="label" margin="normal">
+              Upload Target Key File
+              <input type="file" hidden name="targetSshKeyFile" onChange={handleFileChange} />
+            </Button>
+            <TextField label="Target Key File Path" name="targetSshKeyFilePath" value={formData.targetSshKeyFilePath} fullWidth margin="normal" disabled />
+          </div>
         )}
-        <br />
-        <label>Target SSH Port:</label>
-        <input type="number" name="targetSshPort" value={formData.targetSshPort} onChange={handleChange} />
-        <br />
-        <label>Target SSH IP Address:</label>
-        <input type="text" name="targetIpAddress" value={formData.targetIpAddress} onChange={handleChange} />
-        <br />
 
-        <button type="submit">Submit</button>
+        <TextField label="Target SSH Port" name="targetSshPort" value={formData.targetSshPort} onChange={handleChange} fullWidth margin="normal" />
+        <TextField label="Target IP Address" name="targetIpAddress" value={formData.targetIpAddress} onChange={handleChange} fullWidth margin="normal" />
+        <TextField label="Target Directory to Sync" name="targetDirectoryPath" value={formData.targetDirectoryPath} onChange={handleChange} fullWidth margin="normal" />
+
+        <Button variant="contained" color="primary" type="submit" fullWidth margin="normal">
+          Submit
+        </Button>
       </form>
-      <Link to="/ssh"><button>Fetch SSH Data</button></Link>
     </div>
   );
 };
