@@ -1,0 +1,19 @@
+Validate SSH output: /usr/bin/aws
+AWS CLI found
+[fastsync]
+Profile already exist 
+creating s3 bucket 
+{
+    "Location": "/pfastsync"
+}
+Completed 12 Bytes/1.2 KiB (41 Bytes/s) with 6 file(s) remainingupload: .aws/config to s3://pfastsync/.aws/config               
+Completed 12 Bytes/1.2 KiB (41 Bytes/s) with 5 file(s) remainingCompleted 30 Bytes/1.2 KiB (101 Bytes/s) with 5 file(s) remainingupload: ./.bash_logout to s3://pfastsync/.bash_logout            
+Completed 30 Bytes/1.2 KiB (101 Bytes/s) with 4 file(s) remainingCompleted 171 Bytes/1.2 KiB (578 Bytes/s) with 4 file(s) remainingupload: ./.bash_profile to s3://pfastsync/.bash_profile           
+Completed 171 Bytes/1.2 KiB (578 Bytes/s) with 3 file(s) remainingCompleted 289 Bytes/1.2 KiB (954 Bytes/s) with 3 file(s) remainingupload: .aws/credentials to s3://pfastsync/.aws/credentials       
+Completed 289 Bytes/1.2 KiB (954 Bytes/s) with 2 file(s) remainingCompleted 781 Bytes/1.2 KiB (2.5 KiB/s) with 2 file(s) remaining  upload: ./.bashrc to s3://pfastsync/.bashrc                       
+Completed 781 Bytes/1.2 KiB (2.5 KiB/s) with 1 file(s) remainingCompleted 1.2 KiB/1.2 KiB (3.6 KiB/s) with 1 file(s) remaining  upload: .ssh/authorized_keys to s3://pfastsync/.ssh/authorized_keys
+Directory /home/ec2-user successfully copied to s3://pfastsync.
+
+Sync to Target Error: Command failed: ssh -o StrictHostKeyChecking=no -i uploads/targetSshKeyFile1719229615484.pem ec2-user@44.199.235.203 'bash -s' < targetAccount.bash AKIAU67MRTWZYPB7DV5M ZuSOGiHvGDLYS951oyIL7T65a0UZH6/SRFEg0D/z us-east-1 /home/ec2-user;
+ec2-user@44.199.235.203: Permission denied (publickey,gssapi-keyex,gssapi-with-mic).
+

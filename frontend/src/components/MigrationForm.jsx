@@ -84,7 +84,7 @@ const MigrationForm = () => {
 
   return (
     <div className="container">
-      <h2>AWS Target Account Form</h2>
+      <h2>FastSync Form</h2>
       <form onSubmit={handleSubmit}>
         <TextField label="Project Name" name="projectName" value={formData.projectName} onChange={handleChange} fullWidth margin="normal" />
         <TextField label="AWS Access Key" name="awsAccessKey" value={formData.awsAccessKey} onChange={handleChange} fullWidth margin="normal" />

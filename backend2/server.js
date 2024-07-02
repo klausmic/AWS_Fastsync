@@ -169,8 +169,8 @@ app.post('/api/performActions', (req, res) => {
     });
   };
 
-  const validateSSHCommand = `timeout 35s ssh -o StrictHostKeyChecking=no -i ${validateData.sshKeyFilePath} ${validateData.sshUser}@${validateData.sshIpAddress} 'bash -s' < sourceAccount.bash ${validateData.awsAccessKey} ${validateData.awsSecretKey} ${validateData.region} ${validateData.sourcDirectoryPath};`;
-  const syncToTargetCommand = `timeout 35s ssh -o StrictHostKeyChecking=no -i ${validateData.targetSshKeyFilePath} ${validateData.targetSshUser}@${validateData.targetIpAddress} 'bash -s' < targetAccount.bash ${validateData.awsAccessKey} ${validateData.awsSecretKey} ${validateData.region} ${validateData.targetDirectoryPath};`;
+  const validateSSHCommand = `ssh -o StrictHostKeyChecking=no -i ${validateData.sshKeyFilePath} ${validateData.sshUser}@${validateData.sshIpAddress} 'bash -s' < sourceAccount.bash ${validateData.awsAccessKey} ${validateData.awsSecretKey} ${validateData.region} ${validateData.sourcDirectoryPath};`;
+  const syncToTargetCommand = `ssh -o StrictHostKeyChecking=no -i ${validateData.targetSshKeyFilePath} ${validateData.targetSshUser}@${validateData.targetIpAddress} 'bash -s' < targetAccount.bash ${validateData.awsAccessKey} ${validateData.awsSecretKey} ${validateData.region} ${validateData.targetDirectoryPath};`;
 
   fs.chmodSync(validateData.sshKeyFilePath, '400');
   fs.chmodSync(validateData.targetSshKeyFilePath, '400');

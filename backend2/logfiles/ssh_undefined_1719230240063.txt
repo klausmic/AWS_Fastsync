@@ -1,0 +1,3 @@
+Validate SSH stderr: Warning: Permanently added '3.218.150.43' (ED25519) to the list of known hosts.
+grep: /home/ec2-user/.aws/credentials: No such file or directory
+
