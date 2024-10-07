@@ -8,7 +8,7 @@ pipeline {
     stages {
         stage('Clone Repository') {
             steps {
-                git 'https://github.com/username/repo-name.git' // Replace with your repository URL
+                git 'https://github.com/klausmic/AWS_Fastsync.git' // Replace with your repository URL
             }
         }
 
